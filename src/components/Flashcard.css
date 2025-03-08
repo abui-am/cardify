@@ -1,0 +1,70 @@
+.flashcard {
+  height: 200px;
+  perspective: 1000px;
+  cursor: pointer;
+}
+
+.flashcard-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  border-radius: 8px;
+}
+
+.flashcard.flipped .flashcard-inner {
+  transform: rotateY(180deg);
+}
+
+.flashcard-front, .flashcard-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.flashcard-front {
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+.flashcard-back {
+  background-color: #4CAF50;
+  color: white;
+  transform: rotateY(180deg);
+}
+
+.flashcard p {
+  margin: 0;
+  font-size: 18px;
+}
+
+.flashcard-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.delete-button {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.delete-button:hover {
+  color: #f44336;
+} 
