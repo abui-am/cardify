@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { generateQuestion } from '../services/question';
 import { Flashcard } from '../types';
 import './TextInput.css';
+import useCreateClerkSupabaseClient from '@/hooks/useCreateClerkSupabaseClient';
+import { SupabaseContext } from '@/context/Supabase';
 
 interface TextInputProps {
   onFlashcardsGenerated: (flashcards: Flashcard[]) => void;
@@ -12,6 +14,7 @@ interface TextInputProps {
 const TextInput: React.FC<TextInputProps> = ({ onFlashcardsGenerated }) => {
   const [text, setText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { supabase } = useContext(SupabaseContext);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,13 +24,26 @@ const TextInput: React.FC<TextInputProps> = ({ onFlashcardsGenerated }) => {
     try {
       const result = await generateQuestion(text);
       if (result.data.questions.length > 0) {
-        const newFlashcards = result.data.questions.map((qa) => ({
-          id: Date.now() + Math.random().toString(36).substring(2, 9),
+        const newSuggestions = result.data.questions.map((qa) => ({
           question: qa.question,
           answer: qa.answer,
         }));
 
-        onFlashcardsGenerated(newFlashcards);
+        const res = await supabase
+          ?.from('cards')
+          .insert(
+            newSuggestions.map((suggestion) => ({
+              title: suggestion.question,
+              description: suggestion.answer,
+            }))
+          )
+          .select();
+
+        if (res?.error) {
+          throw new Error(res.error.message);
+        }
+
+        onFlashcardsGenerated(res?.data ?? []);
         setText('');
       } else {
         alert(

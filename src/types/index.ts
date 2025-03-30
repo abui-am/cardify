@@ -1,7 +1,7 @@
-export interface Flashcard {
-  id: string;
-  question: string;
-  answer: string;
+import { Tables } from "../../database.types";
+
+export interface Flashcard extends Tables<'cards'> {
+
 }
 
 

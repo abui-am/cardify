@@ -1,25 +1,29 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import TextInput from '../../components/TextInput';
 import FlashcardList from '../../components/FlashcardList';
 import './App.css';
-
-export interface Flashcard {
-  id: string;
-  question: string;
-  answer: string;
-}
+import { Flashcard } from '@/types';
+import useCreateClerkSupabaseClient from '@/hooks/useCreateClerkSupabaseClient';
+import { SupabaseContext } from '@/context/Supabase';
 
 function IndexPage() {
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
 
   // Load flashcards from localStorage on initial render
-  useEffect(() => {
-    const storedFlashcards = localStorage.getItem('flashcards');
-    if (storedFlashcards) {
-      setFlashcards(JSON.parse(storedFlashcards));
+  const { supabase } = useContext(SupabaseContext);
+  const getFlashcards = async () => {
+    const result = await supabase?.from('cards').select();
+    if (result?.error) {
+      console.error(result.error);
     }
+    if (result?.data) {
+      setFlashcards(result.data);
+    }
+  };
+  useEffect(() => {
+    getFlashcards();
   }, []);
 
   // Save flashcards to localStorage whenever they change
@@ -31,7 +35,7 @@ function IndexPage() {
     setFlashcards((prevFlashcards) => [...prevFlashcards, ...newFlashcards]);
   };
 
-  const deleteFlashcard = (id: string) => {
+  const deleteFlashcard = (id: number) => {
     setFlashcards((prevFlashcards) =>
       prevFlashcards.filter((flashcard) => flashcard.id !== id)
     );

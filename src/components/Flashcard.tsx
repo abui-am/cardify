@@ -6,7 +6,7 @@ import './Flashcard.css';
 
 interface FlashcardProps {
   flashcard: FlashcardType;
-  onDelete: (id: string) => void;
+  onDelete: (id: number) => void;
 }
 
 const Flashcard: React.FC<FlashcardProps> = ({ flashcard, onDelete }) => {
@@ -28,7 +28,7 @@ const Flashcard: React.FC<FlashcardProps> = ({ flashcard, onDelete }) => {
     >
       <div className='flashcard-inner'>
         <div className='flashcard-front'>
-          <p>{flashcard.question}</p>
+          <p>{flashcard.title}</p>
           <div className='flashcard-actions'>
             <button
               className='delete-button'
@@ -40,7 +40,7 @@ const Flashcard: React.FC<FlashcardProps> = ({ flashcard, onDelete }) => {
           </div>
         </div>
         <div className='flashcard-back'>
-          <p>{flashcard.answer}</p>
+          <p>{flashcard.description}</p>
           <div className='flashcard-actions'>
             <button
               className='delete-button'
