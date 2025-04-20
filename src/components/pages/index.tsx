@@ -5,7 +5,6 @@ import TextInput from '../../components/TextInput';
 import FlashcardList from '../../components/FlashcardList';
 import './App.css';
 import { Flashcard } from '@/types';
-import useCreateClerkSupabaseClient from '@/hooks/useCreateClerkSupabaseClient';
 import { SupabaseContext } from '@/context/Supabase';
 
 function IndexPage() {
@@ -14,12 +13,17 @@ function IndexPage() {
   // Load flashcards from localStorage on initial render
   const { supabase } = useContext(SupabaseContext);
   const getFlashcards = async () => {
-    const result = await supabase?.from('cards').select();
-    if (result?.error) {
-      console.error(result.error);
-    }
-    if (result?.data) {
-      setFlashcards(result.data);
+    try {
+      const result = await supabase?.from('cards').select();
+      console.log(result);
+      if (result?.error) {
+        console.error(result.error);
+      }
+      if (result?.data) {
+        setFlashcards(result.data);
+      }
+    } catch (error) {
+      console.error(error);
     }
   };
   useEffect(() => {
