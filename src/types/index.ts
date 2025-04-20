@@ -4,4 +4,7 @@ export interface Flashcard extends Tables<'cards'> {
 
 }
 
+export interface Set extends Tables<'sets'> {
+}
+
 

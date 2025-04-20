@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useContext } from 'react';
+import Link from 'next/link';
 import TextInput from '../../components/TextInput';
 import FlashcardList from '../../components/FlashcardList';
 import './App.css';
@@ -14,7 +15,7 @@ function IndexPage() {
   const { supabase } = useContext(SupabaseContext);
   const getFlashcards = async () => {
     try {
-      const result = await supabase?.from('cards').select();
+      const result = await supabase?.from('cards').select().is('set_id', null);
       console.log(result);
       if (result?.error) {
         console.error(result.error);
@@ -55,6 +56,11 @@ function IndexPage() {
     <div className='app'>
       <header>
         <h1>Text to Flashcards</h1>
+        <nav>
+          <Link href='/sets' className='sets-link'>
+            Manage Flashcard Sets
+          </Link>
+        </nav>
       </header>
       <main>
         <TextInput onFlashcardsGenerated={addFlashcards} />

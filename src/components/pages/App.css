@@ -6,8 +6,11 @@
 }
 
 header {
-  text-align: center;
-  margin-bottom: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
 }
 
 h1 {
@@ -33,4 +36,22 @@ h1 {
 
 .clear-button:hover {
   background-color: #d32f2f;
+}
+
+nav {
+  margin-top: 10px;
+}
+
+.sets-link {
+  background-color: #4caf50;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.sets-link:hover {
+  background-color: #45a049;
 } 

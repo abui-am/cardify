@@ -1,0 +1,42 @@
+.set-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.set-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.set-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.set-card a {
+  color: inherit;
+  text-decoration: none;
+  display: block;
+}
+
+.set-card h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 1.2rem;
+}
+
+.set-meta {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.empty-state {
+  text-align: center;
+  margin: 40px 0;
+  color: #666;
+} 
