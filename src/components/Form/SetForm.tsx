@@ -4,6 +4,7 @@ import { SupabaseContext } from '@/context/Supabase';
 import { useRouter } from 'next/navigation';
 import type React from 'react';
 import { useContext, useState } from 'react';
+import { toast } from 'sonner';
 
 const SetForm: React.FC = () => {
   const [title, setTitle] = useState('');
@@ -13,26 +14,27 @@ const SetForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim() || !supabase) return;
 
     setIsLoading(true);
     try {
       const result = await supabase
-        ?.from('sets')
+        .from('sets')
         .insert({ name: title })
         .select();
 
-      if (result?.error) {
+      if (result.error) {
         throw new Error(result.error.message);
       }
 
-      if (result?.data && result.data.length > 0) {
+      if (result.data && result.data.length > 0) {
         const newSet = result.data[0];
+        toast.success(`Set "${title}" created successfully`);
         router.push(`/sets/${newSet.id}`);
       }
     } catch (error) {
       console.error('Error creating set:', error);
-      alert('Failed to create set. Please try again.');
+      toast.error('Failed to create set. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +63,7 @@ const SetForm: React.FC = () => {
         </div>
         <Button
           type='submit'
-          disabled={isLoading || !title.trim()}
+          disabled={isLoading || !title.trim() || !supabase}
           variant={isLoading || !title.trim() ? 'outline' : 'default'}
           className={
             isLoading || !title.trim()

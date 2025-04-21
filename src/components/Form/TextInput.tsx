@@ -6,6 +6,7 @@ import { useContext, useState } from 'react';
 import { generateQuestion } from '../../services/question';
 import type { Flashcard } from '../../types';
 import { SupabaseContext } from '@/context/Supabase';
+import { toast } from 'sonner';
 
 interface TextInputProps {
   onFlashcardsGenerated: (flashcards: Flashcard[]) => void;
@@ -18,7 +19,7 @@ const TextInput: React.FC<TextInputProps> = ({ onFlashcardsGenerated }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim()) return;
+    if (!text.trim() || !supabase) return;
 
     setIsLoading(true);
     try {
@@ -30,7 +31,7 @@ const TextInput: React.FC<TextInputProps> = ({ onFlashcardsGenerated }) => {
         }));
 
         const res = await supabase
-          ?.from('cards')
+          .from('cards')
           .insert(
             newSuggestions.map((suggestion) => ({
               title: suggestion.question,
@@ -39,20 +40,21 @@ const TextInput: React.FC<TextInputProps> = ({ onFlashcardsGenerated }) => {
           )
           .select();
 
-        if (res?.error) {
+        if (res.error) {
           throw new Error(res.error.message);
         }
 
-        onFlashcardsGenerated(res?.data ?? []);
+        onFlashcardsGenerated(res.data || []);
         setText('');
+        toast.success(`${res.data.length} flashcards generated successfully`);
       } else {
-        alert(
+        toast.error(
           'No questions could be generated from the text. Please try with different content.'
         );
       }
     } catch (error) {
       console.error('Error generating flashcards:', error);
-      alert('Failed to generate flashcards. Please try again.');
+      toast.error('Failed to generate flashcards. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +73,7 @@ const TextInput: React.FC<TextInputProps> = ({ onFlashcardsGenerated }) => {
         />
         <Button
           type='submit'
-          disabled={isLoading || !text.trim()}
+          disabled={isLoading || !text.trim() || !supabase}
           variant={isLoading || !text.trim() ? 'outline' : 'default'}
           className={
             isLoading || !text.trim()

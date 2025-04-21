@@ -40,12 +40,12 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim() || !supabase) return;
 
     setIsLoading(true);
     try {
       const result = await supabase
-        ?.from('cards')
+        .from('cards')
         .insert({
           title,
           description,
@@ -53,11 +53,11 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
         })
         .select();
 
-      if (result?.error) {
+      if (result.error) {
         throw new Error(result.error.message);
       }
 
-      if (result?.data && result.data.length > 0) {
+      if (result.data && result.data.length > 0) {
         onFlashcardCreated(result.data[0]);
         setTitle('');
         setDescription('');
@@ -72,7 +72,7 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
   };
 
   const handleGenerateWithAI = async () => {
-    if (!aiText.trim()) return;
+    if (!aiText.trim() || !supabase) return;
 
     setIsGenerating(true);
     try {
@@ -88,15 +88,15 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
 
         // Insert all cards in a batch
         const response = await supabase
-          ?.from('cards')
+          .from('cards')
           .insert(cardsToInsert)
           .select();
 
-        if (response?.error) {
+        if (response.error) {
           throw new Error(response.error.message);
         }
 
-        if (response?.data && response.data.length > 0) {
+        if (response.data && response.data.length > 0) {
           onMultipleFlashcardsCreated(response.data);
           setAiText('');
           setIsAiDialogOpen(false);
@@ -168,7 +168,9 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
         </div>
         <Button
           type='submit'
-          disabled={isLoading || !title.trim() || !description.trim()}
+          disabled={
+            isLoading || !title.trim() || !description.trim() || !supabase
+          }
           variant={
             isLoading || !title.trim() || !description.trim()
               ? 'outline'
@@ -217,7 +219,7 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
             </Button>
             <Button
               onClick={handleGenerateWithAI}
-              disabled={isGenerating || !aiText.trim()}
+              disabled={isGenerating || !aiText.trim() || !supabase}
               variant='default'
               className={
                 isGenerating || !aiText.trim()

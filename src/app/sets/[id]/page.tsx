@@ -2,7 +2,6 @@
 
 import FlashcardForm from '@/components/Form/FlashcardForm';
 import FlashcardList from '@/components/List/FlashcardList';
-import useSupabaseWithAuth from '@/hooks/useSupabaseWithAuth';
 import type { Flashcard, Set } from '@/types';
 import { SignedIn } from '@clerk/nextjs';
 import Link from 'next/link';
@@ -10,6 +9,7 @@ import { useParams, useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
+import { useSupabase } from '@/context/Supabase';
 
 export default function SetDetailPage() {
   const [set, setSet] = useState<Set | null>(null);
@@ -17,21 +17,23 @@ export default function SetDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const { supabase, executeQuery } = useSupabaseWithAuth();
+  const { supabase } = useSupabase();
   const params = useParams();
   const router = useRouter();
   const setId = Number(params.id);
 
   // Load set and its flashcards
   const loadSetData = async () => {
-    if (!setId) return;
+    if (!setId || !supabase) return;
     setIsLoading(true);
 
     try {
       // Use executeQuery to handle token expiration automatically
-      const setResponse = await executeQuery((client) => {
-        return client.from('sets').select().eq('id', setId).single();
-      });
+      const setResponse = await supabase
+        .from('sets')
+        .select()
+        .eq('id', setId)
+        .single();
 
       if (setResponse.error) {
         console.error(setResponse.error);
@@ -48,13 +50,11 @@ export default function SetDetailPage() {
       }
 
       // Get flashcards for this set with token refresh handling
-      const cardsResponse = await executeQuery((client) => {
-        return client
-          .from('cards')
-          .select()
-          .eq('set_id', setId)
-          .order('created_at', { ascending: false });
-      });
+      const cardsResponse = await supabase
+        .from('cards')
+        .select()
+        .eq('set_id', setId)
+        .order('created_at', { ascending: false });
 
       if (cardsResponse.error) {
         console.error(cardsResponse.error);
@@ -86,11 +86,10 @@ export default function SetDetailPage() {
   };
 
   const deleteFlashcard = async (id: number) => {
+    if (!supabase) return;
     try {
       // Use executeQuery to handle token expiration automatically
-      const result = await executeQuery((client) => {
-        return client.from('cards').delete().eq('id', id);
-      });
+      const result = await supabase.from('cards').delete().eq('id', id);
 
       if (result.error) {
         console.error(result.error);
@@ -116,15 +115,16 @@ export default function SetDetailPage() {
   };
 
   const handleDeleteSet = async () => {
-    if (!set) return;
+    if (!set || !supabase) return;
 
     setIsDeleting(true);
 
     try {
       // First delete all flashcards in the set with token refresh handling
-      const deleteCardsResult = await executeQuery((client) => {
-        return client.from('cards').delete().eq('set_id', setId);
-      });
+      const deleteCardsResult = await supabase
+        .from('cards')
+        .delete()
+        .eq('set_id', setId);
 
       if (deleteCardsResult.error) {
         throw new Error(
@@ -133,9 +133,10 @@ export default function SetDetailPage() {
       }
 
       // Then delete the set itself with token refresh handling
-      const deleteSetResult = await executeQuery((client) => {
-        return client.from('sets').delete().eq('id', setId);
-      });
+      const deleteSetResult = await supabase
+        .from('sets')
+        .delete()
+        .eq('id', setId);
 
       if (deleteSetResult.error) {
         throw new Error(

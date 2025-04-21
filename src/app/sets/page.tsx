@@ -3,10 +3,10 @@
 import SetForm from '@/components/Form/SetForm';
 import SetList from '@/components/List/SetList';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import { SupabaseContext } from '@/context/Supabase';
+import { useSupabase } from '@/context/Supabase';
 import type { Set } from '@/types';
 import { SignedIn } from '@clerk/nextjs';
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 interface SetWithCardCount extends Set {
@@ -19,24 +19,25 @@ export default function SetsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteSet, setDeleteSet] = useState<SetWithCardCount | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const { supabase } = useContext(SupabaseContext);
+  const { supabase, isLoaded } = useSupabase();
 
   // Load sets from Supabase on initial render
   const getSets = async () => {
     setIsLoading(true);
+    if (!supabase || !isLoaded) return;
     try {
       // Get all sets
       const setsResult = await supabase
-        ?.from('sets')
+        .from('sets')
         .select()
         .order('created_at', { ascending: false });
 
-      if (setsResult?.error) {
+      if (setsResult.error) {
         console.error(setsResult.error);
         return;
       }
 
-      if (!setsResult?.data) {
+      if (!setsResult.data) {
         setSets([]);
         return;
       }
@@ -45,13 +46,13 @@ export default function SetsPage() {
       const setsWithCounts = await Promise.all(
         setsResult.data.map(async (set) => {
           const countResult = await supabase
-            ?.from('cards')
+            .from('cards')
             .select('*', { count: 'exact', head: true })
             .eq('set_id', set.id);
 
           return {
             ...set,
-            card_count: countResult?.count || 0,
+            card_count: countResult.count || 0,
           };
         })
       );
@@ -59,6 +60,7 @@ export default function SetsPage() {
       setSets(setsWithCounts);
     } catch (error) {
       console.error(error);
+      toast.error('Failed to load sets. Please refresh the page.');
     } finally {
       setIsLoading(false);
     }
@@ -74,18 +76,18 @@ export default function SetsPage() {
   };
 
   const handleDeleteSet = async () => {
-    if (!deleteSet) return;
+    if (!deleteSet || !supabase) return;
 
     setIsDeleting(true);
 
     try {
       // First delete all flashcards in the set
       const deleteCardsResult = await supabase
-        ?.from('cards')
+        .from('cards')
         .delete()
         .eq('set_id', deleteSet.id);
 
-      if (deleteCardsResult?.error) {
+      if (deleteCardsResult.error) {
         throw new Error(
           `Failed to delete flashcards: ${deleteCardsResult.error.message}`
         );
@@ -93,11 +95,11 @@ export default function SetsPage() {
 
       // Then delete the set itself
       const deleteSetResult = await supabase
-        ?.from('sets')
+        .from('sets')
         .delete()
         .eq('id', deleteSet.id);
 
-      if (deleteSetResult?.error) {
+      if (deleteSetResult.error) {
         throw new Error(
           `Failed to delete set: ${deleteSetResult.error.message}`
         );
@@ -118,7 +120,7 @@ export default function SetsPage() {
 
   useEffect(() => {
     getSets();
-  }, []);
+  }, [isLoaded, supabase]);
 
   return (
     <SignedIn>
