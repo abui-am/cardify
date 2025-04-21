@@ -2,12 +2,12 @@
 
 import FlashcardForm from '@/components/FlashcardForm';
 import FlashcardList from '@/components/FlashcardList';
-import { SupabaseContext } from '@/context/Supabase';
+import useSupabaseWithAuth from '@/hooks/useSupabaseWithAuth';
 import type { Flashcard, Set } from '@/types';
 import { SignedIn } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 export default function SetDetailPage() {
@@ -16,7 +16,7 @@ export default function SetDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const { supabase } = useContext(SupabaseContext);
+  const { supabase, executeQuery } = useSupabaseWithAuth();
   const params = useParams();
   const router = useRouter();
   const setId = Number(params.id);
@@ -27,16 +27,14 @@ export default function SetDetailPage() {
     setIsLoading(true);
 
     try {
-      // Get set details
-      const setResult = await supabase
-        ?.from('sets')
-        .select()
-        .eq('id', setId)
-        .single();
+      // Use executeQuery to handle token expiration automatically
+      const setResponse = await executeQuery((client) => {
+        return client.from('sets').select().eq('id', setId).single();
+      });
 
-      if (setResult?.error) {
-        console.error(setResult.error);
-        if (setResult.error.code === 'PGRST116') {
+      if (setResponse.error) {
+        console.error(setResponse.error);
+        if (setResponse.error.code === 'PGRST116') {
           // Set not found
           router.push('/sets');
           return;
@@ -44,24 +42,26 @@ export default function SetDetailPage() {
         return;
       }
 
-      if (setResult?.data) {
-        setSet(setResult.data);
+      if (setResponse.data) {
+        setSet(setResponse.data);
       }
 
-      // Get flashcards for this set
-      const cardsResult = await supabase
-        ?.from('cards')
-        .select()
-        .eq('set_id', setId)
-        .order('created_at', { ascending: false });
+      // Get flashcards for this set with token refresh handling
+      const cardsResponse = await executeQuery((client) => {
+        return client
+          .from('cards')
+          .select()
+          .eq('set_id', setId)
+          .order('created_at', { ascending: false });
+      });
 
-      if (cardsResult?.error) {
-        console.error(cardsResult.error);
+      if (cardsResponse.error) {
+        console.error(cardsResponse.error);
         return;
       }
 
-      if (cardsResult?.data) {
-        setFlashcards(cardsResult.data);
+      if (cardsResponse.data) {
+        setFlashcards(cardsResponse.data);
       }
     } catch (error) {
       console.error('Error loading set data:', error);
@@ -71,8 +71,10 @@ export default function SetDetailPage() {
   };
 
   useEffect(() => {
-    loadSetData();
-  }, [setId]);
+    if (supabase) {
+      loadSetData();
+    }
+  }, [setId, supabase]);
 
   const addFlashcard = (newFlashcard: Flashcard) => {
     setFlashcards((prevFlashcards) => [newFlashcard, ...prevFlashcards]);
@@ -84,9 +86,12 @@ export default function SetDetailPage() {
 
   const deleteFlashcard = async (id: number) => {
     try {
-      const result = await supabase?.from('cards').delete().eq('id', id);
+      // Use executeQuery to handle token expiration automatically
+      const result = await executeQuery((client) => {
+        return client.from('cards').delete().eq('id', id);
+      });
 
-      if (result?.error) {
+      if (result.error) {
         console.error(result.error);
         return;
       }
@@ -112,25 +117,23 @@ export default function SetDetailPage() {
     setIsDeleting(true);
 
     try {
-      // First delete all flashcards in the set
-      const deleteCardsResult = await supabase
-        ?.from('cards')
-        .delete()
-        .eq('set_id', setId);
+      // First delete all flashcards in the set with token refresh handling
+      const deleteCardsResult = await executeQuery((client) => {
+        return client.from('cards').delete().eq('set_id', setId);
+      });
 
-      if (deleteCardsResult?.error) {
+      if (deleteCardsResult.error) {
         throw new Error(
           `Failed to delete flashcards: ${deleteCardsResult.error.message}`
         );
       }
 
-      // Then delete the set itself
-      const deleteSetResult = await supabase
-        ?.from('sets')
-        .delete()
-        .eq('id', setId);
+      // Then delete the set itself with token refresh handling
+      const deleteSetResult = await executeQuery((client) => {
+        return client.from('sets').delete().eq('id', setId);
+      });
 
-      if (deleteSetResult?.error) {
+      if (deleteSetResult.error) {
         throw new Error(
           `Failed to delete set: ${deleteSetResult.error.message}`
         );
