@@ -1,64 +1,161 @@
-"use client";
+'use client';
 
-import SetForm from "@/components/SetForm";
-import SetList from "@/components/SetList";
-import { SupabaseContext } from "@/context/Supabase";
-import type { Set } from "@/types";
-import { SignedIn } from "@clerk/nextjs";
-import React, { useState, useEffect, useContext } from "react";
+import SetForm from '@/components/SetForm';
+import SetList from '@/components/SetList';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { SupabaseContext } from '@/context/Supabase';
+import type { Set } from '@/types';
+import { SignedIn } from '@clerk/nextjs';
+import React, { useState, useEffect, useContext } from 'react';
+
+interface SetWithCardCount extends Set {
+  card_count?: number;
+}
 
 export default function SetsPage() {
-	const [sets, setSets] = useState<Set[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const { supabase } = useContext(SupabaseContext);
+  const [sets, setSets] = useState<SetWithCardCount[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteSet, setDeleteSet] = useState<SetWithCardCount | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { supabase } = useContext(SupabaseContext);
 
-	// Load sets from Supabase on initial render
-	const getSets = async () => {
-		setIsLoading(true);
-		try {
-			const result = await supabase
-				?.from("sets")
-				.select()
-				.order("created_at", { ascending: false });
-			if (result?.error) {
-				console.error(result.error);
-			}
-			if (result?.data) {
-				setSets(result.data);
-			}
-		} catch (error) {
-			console.error(error);
-		} finally {
-			setIsLoading(false);
-		}
-	};
+  // Load sets from Supabase on initial render
+  const getSets = async () => {
+    setIsLoading(true);
+    try {
+      // Get all sets
+      const setsResult = await supabase
+        ?.from('sets')
+        .select()
+        .order('created_at', { ascending: false });
 
-	useEffect(() => {
-		getSets();
-	}, []);
+      if (setsResult?.error) {
+        console.error(setsResult.error);
+        return;
+      }
 
-	return (
-		<SignedIn>
-			<div className="container">
-				<header className="mb-8">
-					<h1 className="text-3xl font-bold">My Flashcard Sets</h1>
-					<p className="text-gray-600 mt-2">
-						Create and manage your flashcard collections
-					</p>
-				</header>
+      if (!setsResult?.data) {
+        setSets([]);
+        return;
+      }
 
-				<main>
-					<SetForm />
+      // Get card counts for each set
+      const setsWithCounts = await Promise.all(
+        setsResult.data.map(async (set) => {
+          const countResult = await supabase
+            ?.from('cards')
+            .select('*', { count: 'exact', head: true })
+            .eq('set_id', set.id);
 
-					{isLoading ? (
-						<div className="text-center py-10">Loading sets...</div>
-					) : (
-						<div className="mt-8">
-							<SetList sets={sets} />
-						</div>
-					)}
-				</main>
-			</div>
-		</SignedIn>
-	);
+          return {
+            ...set,
+            card_count: countResult?.count || 0,
+          };
+        })
+      );
+
+      setSets(setsWithCounts);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Delete a set and its flashcards - modified to use dialog
+  const handleDeleteSetRequest = (setId: number, setName: string) => {
+    const setToDelete = sets.find((set) => set.id === setId);
+    if (setToDelete) {
+      setDeleteSet(setToDelete);
+      setIsDeleteDialogOpen(true);
+    }
+  };
+
+  const handleDeleteSet = async () => {
+    if (!deleteSet) return;
+
+    setIsDeleting(true);
+
+    try {
+      // First delete all flashcards in the set
+      const deleteCardsResult = await supabase
+        ?.from('cards')
+        .delete()
+        .eq('set_id', deleteSet.id);
+
+      if (deleteCardsResult?.error) {
+        throw new Error(
+          `Failed to delete flashcards: ${deleteCardsResult.error.message}`
+        );
+      }
+
+      // Then delete the set itself
+      const deleteSetResult = await supabase
+        ?.from('sets')
+        .delete()
+        .eq('id', deleteSet.id);
+
+      if (deleteSetResult?.error) {
+        throw new Error(
+          `Failed to delete set: ${deleteSetResult.error.message}`
+        );
+      }
+
+      // Update the sets list
+      setSets((prevSets) => prevSets.filter((set) => set.id !== deleteSet.id));
+    } catch (error) {
+      console.error('Error deleting set:', error);
+      alert('Failed to delete the set. Please try again.');
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setDeleteSet(null);
+    }
+  };
+
+  useEffect(() => {
+    getSets();
+  }, []);
+
+  return (
+    <SignedIn>
+      <div className='container'>
+        <header className='mb-8'>
+          <h1 className='text-3xl font-bold'>My Flashcard Sets</h1>
+          <p className='text-gray-600 mt-2'>
+            Create and manage your flashcard collections
+          </p>
+        </header>
+
+        <main>
+          <SetForm />
+
+          {isLoading ? (
+            <div className='text-center py-10'>Loading sets...</div>
+          ) : (
+            <div className='mt-8'>
+              <SetList sets={sets} onDeleteSet={handleDeleteSetRequest} />
+            </div>
+          )}
+        </main>
+
+        {/* Delete confirmation dialog */}
+        <ConfirmDialog
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={handleDeleteSet}
+          title='Delete Flashcard Set'
+          description={`Are you sure you want to delete "${
+            deleteSet?.name
+          }"? All ${
+            deleteSet?.card_count || 0
+          } flashcards in this set will also be deleted. This action cannot be undone.`}
+          confirmText='Delete Set'
+          isLoading={isDeleting}
+          isDanger={true}
+        />
+      </div>
+    </SignedIn>
+  );
 }
