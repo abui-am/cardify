@@ -1,7 +1,8 @@
 'use client';
+import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type React from 'react';
-import type { Set } from '../types';
+import type { Set } from '../../types';
 
 interface SetWithCardCount extends Set {
   card_count?: number;
@@ -39,7 +40,9 @@ const SetList: React.FC<SetListProps> = ({ sets, onDeleteSet }) => {
           className='bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden relative'
         >
           {onDeleteSet && (
-            <button
+            <Button
+              variant='ghost'
+              size='icon'
               onClick={(e) => handleDelete(e, set)}
               className='absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10'
               title='Delete set'
@@ -56,7 +59,7 @@ const SetList: React.FC<SetListProps> = ({ sets, onDeleteSet }) => {
                   clipRule='evenodd'
                 />
               </svg>
-            </button>
+            </Button>
           )}
           <Link href={`/sets/${set.id}`} className='block p-5 h-full'>
             <h3 className='text-xl font-medium text-gray-800 mb-2'>

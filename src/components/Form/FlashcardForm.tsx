@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { SupabaseContext } from '@/context/Supabase';
 import { generateQuestion } from '@/services/question';
 import type { Flashcard } from '@/types';
@@ -120,14 +121,14 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
     <div className='bg-gray-100 rounded-lg p-6 mb-8'>
       <div className='flex flex-col md:flex-row justify-between items-start md:items-center mb-4'>
         <h3 className='text-xl font-semibold'>Add New Flashcard</h3>
-        <button
-          type='button'
+        <Button
+          variant='secondary'
           onClick={() => setIsAiDialogOpen(true)}
-          className='mt-2 md:mt-0 bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md transition-colors flex items-center'
+          className='mt-2 md:mt-0 bg-purple-600 hover:bg-purple-700 text-white'
         >
           <span className='mr-2'>✨</span>
           Generate with AI
-        </button>
+        </Button>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -165,17 +166,22 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
             required
           />
         </div>
-        <button
+        <Button
           type='submit'
           disabled={isLoading || !title.trim() || !description.trim()}
-          className={`px-4 py-2 rounded-md text-white font-medium transition-colors ${
+          variant={
+            isLoading || !title.trim() || !description.trim()
+              ? 'outline'
+              : 'default'
+          }
+          className={
             isLoading || !title.trim() || !description.trim()
               ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-blue-500 hover:bg-blue-600'
-          }`}
+              : ''
+          }
         >
           {isLoading ? 'Adding...' : 'Add Flashcard'}
-        </button>
+        </Button>
       </form>
 
       {/* AI Generation Dialog */}
@@ -202,24 +208,25 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
           </div>
 
           <DialogFooter className='flex justify-end gap-3'>
-            <button
+            <Button
+              variant='outline'
               onClick={() => setIsAiDialogOpen(false)}
-              className='px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100'
               disabled={isGenerating}
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleGenerateWithAI}
               disabled={isGenerating || !aiText.trim()}
-              className={`px-4 py-2 rounded-md text-white font-medium ${
+              variant='default'
+              className={
                 isGenerating || !aiText.trim()
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-purple-600 hover:bg-purple-700'
-              }`}
+              }
             >
               {isGenerating ? 'Generating...' : 'Generate Flashcards'}
-            </button>
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

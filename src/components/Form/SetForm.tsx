@@ -1,9 +1,9 @@
 'use client';
+import { Button } from '@/components/ui/button';
 import { SupabaseContext } from '@/context/Supabase';
 import { useRouter } from 'next/navigation';
 import type React from 'react';
 import { useContext, useState } from 'react';
-import { toast } from 'sonner';
 
 const SetForm: React.FC = () => {
   const [title, setTitle] = useState('');
@@ -28,12 +28,11 @@ const SetForm: React.FC = () => {
 
       if (result?.data && result.data.length > 0) {
         const newSet = result.data[0];
-        toast.success(`Set "${title}" created successfully`);
         router.push(`/sets/${newSet.id}`);
       }
     } catch (error) {
       console.error('Error creating set:', error);
-      toast.error('Failed to create set. Please try again.');
+      alert('Failed to create set. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -60,17 +59,18 @@ const SetForm: React.FC = () => {
             required
           />
         </div>
-        <button
+        <Button
           type='submit'
           disabled={isLoading || !title.trim()}
-          className={`px-4 py-2 rounded-md text-white font-medium transition-colors ${
+          variant={isLoading || !title.trim() ? 'outline' : 'default'}
+          className={
             isLoading || !title.trim()
               ? 'bg-gray-400 cursor-not-allowed'
               : 'bg-green-600 hover:bg-green-700'
-          }`}
+          }
         >
           {isLoading ? 'Creating...' : 'Create Set'}
-        </button>
+        </Button>
       </form>
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
-import SetForm from '@/components/SetForm';
-import SetList from '@/components/SetList';
+import SetForm from '@/components/Form/SetForm';
+import SetList from '@/components/List/SetList';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { SupabaseContext } from '@/context/Supabase';
 import type { Set } from '@/types';

@@ -1,7 +1,7 @@
 'use client';
 
-import FlashcardForm from '@/components/FlashcardForm';
-import FlashcardList from '@/components/FlashcardList';
+import FlashcardForm from '@/components/Form/FlashcardForm';
+import FlashcardList from '@/components/List/FlashcardList';
 import useSupabaseWithAuth from '@/hooks/useSupabaseWithAuth';
 import type { Flashcard, Set } from '@/types';
 import { SignedIn } from '@clerk/nextjs';

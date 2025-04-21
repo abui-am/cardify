@@ -2,8 +2,9 @@
 
 import type React from 'react';
 import { useState } from 'react';
-import type { Flashcard as FlashcardType } from '../types';
-import ConfirmDialog from './ui/ConfirmDialog';
+import type { Flashcard as FlashcardType } from '../../types';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import { Button } from '../ui/button';
 
 interface FlashcardProps {
   flashcard: FlashcardType;
@@ -30,10 +31,12 @@ const Flashcard: React.FC<FlashcardProps> = ({ flashcard, onDelete }) => {
 
   // Common delete button component
   const DeleteButton = () => (
-    <button
-      className='text-gray-400 hover:text-red-500 transition-colors'
+    <Button
+      variant='ghost'
+      size='icon'
       onClick={handleDelete}
       title='Delete flashcard'
+      className='text-gray-400 hover:text-red-500'
     >
       <svg
         className='w-5 h-5'
@@ -47,7 +50,7 @@ const Flashcard: React.FC<FlashcardProps> = ({ flashcard, onDelete }) => {
           clipRule='evenodd'
         />
       </svg>
-    </button>
+    </Button>
   );
 
   return (
