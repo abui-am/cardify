@@ -1,57 +1,57 @@
 .app {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  font-family: Arial, sans-serif;
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 20px;
+	font-family: Arial, sans-serif;
 }
 
 header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 2rem;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+	margin-bottom: 2rem;
 }
 
 h1 {
-  color: #333;
+	color: #333;
 }
 
 .flashcards-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 30px 0 20px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin: 30px 0 20px;
 }
 
 .clear-button {
-  background-color: #f44336;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
+	background-color: #f44336;
+	color: white;
+	border: none;
+	padding: 8px 16px;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 14px;
 }
 
 .clear-button:hover {
-  background-color: #d32f2f;
+	background-color: #d32f2f;
 }
 
 nav {
-  margin-top: 10px;
+	margin-top: 10px;
 }
 
 .sets-link {
-  background-color: #4caf50;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 4px;
-  text-decoration: none;
-  font-size: 14px;
-  transition: background-color 0.2s;
+	background-color: #4caf50;
+	color: white;
+	padding: 8px 12px;
+	border-radius: 4px;
+	text-decoration: none;
+	font-size: 14px;
+	transition: background-color 0.2s;
 }
 
 .sets-link:hover {
-  background-color: #45a049;
-} 
+	background-color: #45a049;
+}
