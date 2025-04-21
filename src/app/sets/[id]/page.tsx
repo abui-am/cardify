@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { toast } from 'sonner';
 
 export default function SetDetailPage() {
   const [set, setSet] = useState<Set | null>(null);
@@ -93,14 +94,17 @@ export default function SetDetailPage() {
 
       if (result.error) {
         console.error(result.error);
+        toast.error('Failed to delete flashcard');
         return;
       }
 
       setFlashcards((prevFlashcards) =>
         prevFlashcards.filter((flashcard) => flashcard.id !== id)
       );
+      toast.success('Flashcard deleted successfully');
     } catch (error) {
       console.error('Error deleting flashcard:', error);
+      toast.error('Error deleting flashcard. Please try again.');
     }
   };
 
@@ -139,11 +143,13 @@ export default function SetDetailPage() {
         );
       }
 
+      toast.success(`Set "${set.name}" deleted successfully`);
+
       // Redirect to the sets page
       router.push('/sets');
     } catch (error) {
       console.error('Error deleting set:', error);
-      alert('Failed to delete the set. Please try again.');
+      toast.error('Failed to delete the set. Please try again.');
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);

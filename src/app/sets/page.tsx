@@ -7,6 +7,7 @@ import { SupabaseContext } from '@/context/Supabase';
 import type { Set } from '@/types';
 import { SignedIn } from '@clerk/nextjs';
 import React, { useState, useEffect, useContext } from 'react';
+import { toast } from 'sonner';
 
 interface SetWithCardCount extends Set {
   card_count?: number;
@@ -104,9 +105,10 @@ export default function SetsPage() {
 
       // Update the sets list
       setSets((prevSets) => prevSets.filter((set) => set.id !== deleteSet.id));
+      toast.success(`Set "${deleteSet.name}" deleted successfully`);
     } catch (error) {
       console.error('Error deleting set:', error);
-      alert('Failed to delete the set. Please try again.');
+      toast.error('Failed to delete the set. Please try again.');
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
