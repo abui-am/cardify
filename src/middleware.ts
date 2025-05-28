@@ -17,7 +17,13 @@ export default clerkMiddleware(async (auth, req) => {
 
 	// Store the original URL for redirection after authentication
 	const returnToUrl = req.url;
-
+	// Skip authentication for API routes that handle their own auth
+	if (
+		req.nextUrl.pathname.startsWith("/api/uploadthing") ||
+		req.nextUrl.pathname.startsWith("/api/groups")
+	) {
+		return;
+	}
 	// Allow access to public routes and static assets
 	if (isPublicRoute(req) || path.startsWith("/api/public")) {
 		return NextResponse.next();
@@ -47,5 +53,7 @@ export const config = {
 	matcher: [
 		// Skip Next.js internals but match all pages and API routes
 		"/((?!_next/static|_next/image|favicon.ico).*)",
+		// Always run for API routes
+		"/(api|trpc)(.*)",
 	],
 };

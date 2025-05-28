@@ -157,13 +157,14 @@ export default function SetDetailPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className='container'>
-        <div className='text-center py-10'>Loading set data...</div>
-      </div>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className='container'>
+  //       TESTTTT
+  //       <div className='text-center py-10'>Loading set data...</div>
+  //     </div>
+  //   );
+  // }
 
   if (!set) {
     return (
@@ -198,6 +199,7 @@ export default function SetDetailPage() {
                 disabled={isDeleting}
                 className='text-red-500 hover:text-red-700 text-sm font-medium flex items-center'
                 title='Delete this set'
+                type='button'
               >
                 {isDeleting ? (
                   'Deleting...'
@@ -208,6 +210,8 @@ export default function SetDetailPage() {
                       fill='currentColor'
                       viewBox='0 0 20 20'
                       xmlns='http://www.w3.org/2000/svg'
+                      aria-label='Delete set'
+                      aria-hidden='true'
                     >
                       <path
                         fillRule='evenodd'

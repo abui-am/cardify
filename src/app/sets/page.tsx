@@ -4,6 +4,8 @@ import SetForm from '@/components/Form/SetForm';
 import SetList from '@/components/List/SetList';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useSupabase } from '@/context/Supabase';
+import { UploadButton } from '@/utils/uploadthing';
+
 import type { Set } from '@/types';
 import { SignedIn } from '@clerk/nextjs';
 import React, { useState, useEffect } from 'react';
