@@ -38,5 +38,5 @@ return text
 .replace(/([A-Z ]{3,})/g, '# $1') // Naive way to guess headings
 .trim();
 }
-
+s
 convertPdfToMarkdown('your.pdf');
