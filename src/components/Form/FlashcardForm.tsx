@@ -11,7 +11,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { SupabaseContext } from '@/context/Supabase';
 import { generateQuestion } from '@/services/question';
-import { UploadButton } from '@/utils/uploadthing';
 import type { Flashcard } from '@/types';
 import type React from 'react';
 import { useContext, useState } from 'react';
@@ -39,7 +38,7 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
   const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
   const [isPdfDialogOpen, setIsPdfDialogOpen] = useState(false);
   const [aiText, setAiText] = useState('');
-  const [pdfFileUrl, setPdfFileUrl] = useState('');
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const { supabase } = useContext(SupabaseContext);
 
@@ -123,20 +122,65 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
   };
 
   const handleGenerateFromPdf = async () => {
-    if (!pdfFileUrl || !supabase) return;
+    if (!pdfFile || !supabase) return;
 
     setIsGenerating(true);
     try {
-      // TODO: Add PDF text extraction and processing logic here
-      // For now, we'll show a placeholder message
-      toast.info('PDF processing will be implemented soon!');
+      // Create FormData with the PDF file and setId
+      const formData = new FormData();
+      formData.append('pdfFile', pdfFile);
+      formData.append('setId', setId.toString());
 
-      // Reset state
-      setPdfFileUrl('');
-      setIsPdfDialogOpen(false);
+      const response = await fetch('/api/pdf-parse', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to process PDF');
+      }
+
+      const result = await response.json();
+
+      if (result.questions && result.questions.length > 0) {
+        // Create flashcard objects for insertion
+        const cardsToInsert = result.questions.map(
+          (qa: { question: string; answer: string }) => ({
+            title: qa.question,
+            description: qa.answer,
+            set_id: setId,
+          })
+        );
+
+        // Insert all cards in a batch
+        const dbResponse = await supabase
+          .from('cards')
+          .insert(cardsToInsert)
+          .select();
+
+        if (dbResponse.error) {
+          throw new Error(dbResponse.error.message);
+        }
+
+        if (dbResponse.data && dbResponse.data.length > 0) {
+          onMultipleFlashcardsCreated(dbResponse.data);
+          setPdfFile(null);
+          setIsPdfDialogOpen(false);
+          toast.success(
+            `${dbResponse.data.length} flashcards generated from PDF successfully`
+          );
+        }
+      } else {
+        toast.error(
+          'No flashcards could be generated from the PDF. Please try with a different PDF file.'
+        );
+      }
     } catch (error) {
       console.error('Error processing PDF:', error);
-      toast.error('Failed to process PDF. Please try again.');
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to process PDF';
+      toast.error(`PDF processing failed: ${errorMessage}`);
     } finally {
       setIsGenerating(false);
     }
@@ -283,7 +327,7 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
           </DialogHeader>
 
           <div className='py-4'>
-            {!pdfFileUrl ? (
+            {!pdfFile ? (
               <div className='border-2 border-dashed border-gray-300 rounded-lg p-8 text-center'>
                 <div className='mb-4'>
                   <span className='text-4xl'>📄</span>
@@ -291,23 +335,35 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
                 <p className='text-gray-600 mb-4'>
                   Click below to upload your PDF file
                 </p>
-                <UploadButton
-                  endpoint='pdfUploader'
-                  onClientUploadComplete={(res) => {
-                    if (res?.[0]) {
-                      setPdfFileUrl(res[0].url);
-                      toast.success('PDF uploaded successfully!');
+                <input
+                  type='file'
+                  accept='.pdf,application/pdf'
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (
+                        file.type === 'application/pdf' ||
+                        file.name.toLowerCase().endsWith('.pdf')
+                      ) {
+                        setPdfFile(file);
+                        toast.success('PDF uploaded successfully!');
+                      } else {
+                        toast.error('Please select a valid PDF file');
+                      }
                     }
                   }}
-                  onUploadError={(error: Error) => {
-                    toast.error(`Upload failed: ${error.message}`);
-                  }}
-                  appearance={{
-                    button:
-                      'bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md',
-                    allowedContent: 'text-sm text-gray-600 mt-2',
-                  }}
+                  className='hidden'
+                  id='pdf-upload'
                 />
+                <label
+                  htmlFor='pdf-upload'
+                  className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md cursor-pointer inline-block'
+                >
+                  Choose PDF File
+                </label>
+                <p className='text-sm text-gray-600 mt-2'>
+                  Maximum file size: 16MB
+                </p>
               </div>
             ) : (
               <div className='border border-green-300 bg-green-50 rounded-lg p-4'>
@@ -315,13 +371,13 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
                   <div className='flex items-center'>
                     <span className='text-green-600 mr-2'>✅</span>
                     <span className='text-green-800 font-medium'>
-                      PDF uploaded successfully!
+                      {pdfFile.name}
                     </span>
                   </div>
                   <Button
                     variant='outline'
                     size='sm'
-                    onClick={() => setPdfFileUrl('')}
+                    onClick={() => setPdfFile(null)}
                     className='text-red-600 hover:text-red-700'
                   >
                     Remove
@@ -344,10 +400,10 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
             </Button>
             <Button
               onClick={handleGenerateFromPdf}
-              disabled={isGenerating || !pdfFileUrl || !supabase}
+              disabled={isGenerating || !pdfFile || !supabase}
               variant='default'
               className={
-                isGenerating || !pdfFileUrl
+                isGenerating || !pdfFile
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-blue-600 hover:bg-blue-700'
               }
