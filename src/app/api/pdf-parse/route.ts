@@ -1,6 +1,6 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { parsePdfToMarkdown } from "@/services/pdf-parser";
 import { generateQuestion } from "@/services/question";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
 	try {
