@@ -33,6 +33,7 @@ export default function TestInterface({
   const [currentQuestionId, setCurrentQuestionId] = useState<number | null>(
     null
   );
+  const [isCheckingAnswer, setIsCheckingAnswer] = useState(false);
 
   const currentQuestion = session.questions[session.currentQuestionIndex];
   const progress = getProgressPercentage(session);
@@ -64,13 +65,24 @@ export default function TestInterface({
     setQuestionStartTime(Date.now());
   }, []);
 
-  const handleSubmitAnswer = () => {
+  const handleSubmitAnswer = async () => {
     if (!userAnswer.trim()) return;
 
-    const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
-    const updatedSession = submitAnswer(session, userAnswer.trim(), timeSpent);
-    onSessionUpdate(updatedSession);
-    setShowAnswer(true);
+    setIsCheckingAnswer(true);
+    try {
+      const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
+      const updatedSession = await submitAnswer(
+        session,
+        userAnswer.trim(),
+        timeSpent
+      );
+      onSessionUpdate(updatedSession);
+      setShowAnswer(true);
+    } catch (error) {
+      console.error('Error submitting answer:', error);
+    } finally {
+      setIsCheckingAnswer(false);
+    }
   };
 
   const handleNext = () => {
@@ -219,10 +231,10 @@ export default function TestInterface({
         <button
           type='button'
           onClick={handleSubmitAnswer}
-          disabled={!userAnswer.trim()}
+          disabled={!userAnswer.trim() || isCheckingAnswer}
           className='px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
         >
-          Submit Answer
+          {isCheckingAnswer ? 'Checking...' : 'Submit Answer'}
         </button>
       ) : null}
     </div>
@@ -268,10 +280,12 @@ export default function TestInterface({
         <button
           type='button'
           onClick={handleSubmitAnswer}
-          disabled={!userAnswer.trim()}
+          disabled={!userAnswer.trim() || isCheckingAnswer}
           className='px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
         >
-          Submit Answer
+          {isCheckingAnswer && session.mode === 'type-answer'
+            ? 'AI Checking...'
+            : 'Submit Answer'}
         </button>
       ) : null}
     </div>

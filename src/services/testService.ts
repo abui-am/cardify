@@ -31,11 +31,45 @@ function generateSessionId(): string {
 	return `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-function checkAnswer(
+async function checkAnswerWithAI(
+	userAnswer: string,
+	correctAnswer: string,
+): Promise<boolean> {
+	try {
+		const response = await fetch("/api/check-answer", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ userAnswer, correctAnswer }),
+		});
+
+		if (!response.ok) {
+			throw new Error("AI service unavailable");
+		}
+
+		const data = await response.json();
+		return data.isCorrect;
+	} catch (error) {
+		console.error("AI answer checking failed:", error);
+		// Fallback to basic string similarity if AI fails
+		const normalizedUser = userAnswer.trim().toLowerCase();
+		const normalizedCorrect = correctAnswer.trim().toLowerCase();
+
+		// Accept if it's an exact match or contains the correct answer
+		return (
+			normalizedUser === normalizedCorrect ||
+			normalizedUser.includes(normalizedCorrect) ||
+			normalizedCorrect.includes(normalizedUser)
+		);
+	}
+}
+
+async function checkAnswer(
 	userAnswer: string,
 	correctAnswer: string,
 	mode: TestMode,
-): boolean {
+): Promise<boolean> {
 	const normalizedUser = userAnswer.trim().toLowerCase();
 	const normalizedCorrect = correctAnswer.trim().toLowerCase();
 
@@ -44,8 +78,8 @@ function checkAnswer(
 			// For flashcard mode, we can be more lenient
 			return normalizedUser === normalizedCorrect;
 		case "type-answer":
-			// For type answer, require exact match (case insensitive)
-			return normalizedUser === normalizedCorrect;
+			// For type answer, use AI to check semantic similarity
+			return await checkAnswerWithAI(userAnswer, correctAnswer);
 		case "multiple-choice":
 			// For multiple choice, exact match
 			return normalizedUser === normalizedCorrect;
@@ -84,11 +118,11 @@ export function createTestSession(
 	};
 }
 
-export function submitAnswer(
+export async function submitAnswer(
 	session: TestSession,
 	answer: string,
 	timeSpent: number,
-): TestSession {
+): Promise<TestSession> {
 	const updatedSession = { ...session };
 	const currentQuestion =
 		updatedSession.questions[session.currentQuestionIndex];
@@ -97,11 +131,18 @@ export function submitAnswer(
 		throw new Error("No current question found");
 	}
 
+	// Check answer with AI for type-answer mode
+	const isCorrect = await checkAnswer(
+		answer,
+		currentQuestion.correctAnswer,
+		session.mode,
+	);
+
 	// Update the current question with user's answer
 	const updatedQuestion = {
 		...currentQuestion,
 		userAnswer: answer,
-		isCorrect: checkAnswer(answer, currentQuestion.correctAnswer, session.mode),
+		isCorrect,
 		timeSpent,
 		attemptCount: currentQuestion.attemptCount + 1,
 	};
