@@ -131,6 +131,9 @@ export async function submitAnswer(
 		throw new Error("No current question found");
 	}
 
+	// Store the previous correct status to handle score updates
+	const wasCorrectBefore = currentQuestion.isCorrect === true;
+
 	// Check answer with AI for type-answer mode
 	const isCorrect = await checkAnswer(
 		answer,
@@ -149,10 +152,15 @@ export async function submitAnswer(
 
 	updatedSession.questions[session.currentQuestionIndex] = updatedQuestion;
 
-	// Update score if correct
-	if (updatedQuestion.isCorrect) {
+	// Update score properly - only count each question once
+	if (isCorrect && !wasCorrectBefore) {
+		// Question became correct (was not correct before)
 		updatedSession.score += 1;
+	} else if (!isCorrect && wasCorrectBefore) {
+		// Question became incorrect (was correct before)
+		updatedSession.score -= 1;
 	}
+	// If isCorrect === wasCorrectBefore, score doesn't change
 
 	return updatedSession;
 }

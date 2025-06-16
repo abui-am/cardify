@@ -60,10 +60,18 @@ export default function TestInterface({
 
   // Reset state when question changes
   useEffect(() => {
-    setUserAnswer('');
-    setShowAnswer(false);
+    // Check if the current question has already been answered
+    if (currentQuestion && currentQuestion.userAnswer !== undefined) {
+      // Restore previous answer and show the result
+      setUserAnswer(currentQuestion.userAnswer);
+      setShowAnswer(true);
+    } else {
+      // Reset state for new/unanswered questions
+      setUserAnswer('');
+      setShowAnswer(false);
+    }
     setQuestionStartTime(Date.now());
-  }, []);
+  }, [currentQuestion]);
 
   const handleSubmitAnswer = async () => {
     if (!userAnswer.trim()) return;
@@ -89,11 +97,6 @@ export default function TestInterface({
     const updatedSession = moveToNextQuestion(session);
     onSessionUpdate(updatedSession);
 
-    // Reset state for next question
-    setUserAnswer('');
-    setShowAnswer(false);
-    setQuestionStartTime(Date.now());
-
     if (updatedSession.isCompleted) {
       onComplete();
     }
@@ -102,11 +105,6 @@ export default function TestInterface({
   const handlePrevious = () => {
     const updatedSession = moveToPreviousQuestion(session);
     onSessionUpdate(updatedSession);
-
-    // Reset state for previous question
-    setUserAnswer('');
-    setShowAnswer(false);
-    setQuestionStartTime(Date.now());
   };
 
   const renderFlashcardMode = () => (
@@ -150,11 +148,8 @@ export default function TestInterface({
           <button
             type='button'
             onClick={() => {
+              setUserAnswer(currentQuestion.correctAnswer);
               handleSubmitAnswer();
-              // Auto-mark as correct in flashcard mode when showing answer
-              if (!currentQuestion.isCorrect) {
-                setUserAnswer(currentQuestion.correctAnswer);
-              }
             }}
             className='px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors'
           >
