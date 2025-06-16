@@ -157,15 +157,6 @@ export default function SetDetailPage() {
     }
   };
 
-  // if (isLoading) {
-  //   return (
-  //     <div className='container'>
-  //       TESTTTT
-  //       <div className='text-center py-10'>Loading set data...</div>
-  //     </div>
-  //   );
-  // }
-
   if (!set) {
     return (
       <div className='container'>

@@ -19,15 +19,15 @@ import type {
   TestSettings as TestSettingsType,
 } from '@/types';
 
-type TestPhase = 'loading' | 'settings' | 'testing' | 'results';
+type TestPhase = 'settings' | 'testing' | 'results';
 
 export default function TestPage() {
-  const [phase, setPhase] = useState<TestPhase>('loading');
+  const [phase, setPhase] = useState<TestPhase>('settings');
   const [set, setSet] = useState<FlashcardSet | null>(null);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [testSession, setTestSession] = useState<TestSession | null>(null);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isFetched, setIsFetched] = useState(false);
 
   const { supabase } = useSupabase();
   const params = useParams();
@@ -40,8 +40,6 @@ export default function TestPage() {
       if (!setId || !supabase) return;
 
       try {
-        setIsLoading(true);
-
         // Load set details
         const setResponse = await supabase
           .from('sets')
@@ -83,13 +81,11 @@ export default function TestPage() {
             return;
           }
         }
-
-        setPhase('settings');
       } catch (error) {
         console.error('Error loading test data:', error);
         toast.error('Error loading test data');
       } finally {
-        setIsLoading(false);
+        setIsFetched(true);
       }
     };
 
@@ -189,7 +185,7 @@ export default function TestPage() {
     .map((card) => card.description || '')
     .filter(Boolean);
 
-  if (isLoading) {
+  if (!isFetched) {
     return (
       <div className='container mx-auto px-4 py-8'>
         <div className='text-center'>
@@ -206,7 +202,7 @@ export default function TestPage() {
         <div className='text-center'>
           <h1 className='text-2xl font-bold mb-4'>Set Not Found</h1>
           <p className='text-gray-600 mb-4'>
-            The requested set could not be found.
+            The requessted set could not be found.
           </p>
           <Link href='/sets' className='text-blue-600 hover:underline'>
             Back to Sets
