@@ -243,9 +243,10 @@ export default function TestInterface({
         </h3>
 
         <div className='mb-6'>
-          <input
-            type='text'
+          <textarea
             value={userAnswer}
+            rows={2}
+            cols={50}
             onChange={(e) => setUserAnswer(e.target.value)}
             disabled={showAnswer}
             placeholder='Type your answer here...'
