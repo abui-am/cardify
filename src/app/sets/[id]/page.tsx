@@ -2,14 +2,14 @@
 
 import FlashcardForm from '@/components/Form/FlashcardForm';
 import FlashcardList from '@/components/List/FlashcardList';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { useSupabase } from '@/context/Supabase';
 import type { Flashcard, Set } from '@/types';
 import { SignedIn } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
-import { useSupabase } from '@/context/Supabase';
 
 export default function SetDetailPage() {
   const [set, setSet] = useState<Set | null>(null);
@@ -157,15 +157,6 @@ export default function SetDetailPage() {
     }
   };
 
-  // if (isLoading) {
-  //   return (
-  //     <div className='container'>
-  //       TESTTTT
-  //       <div className='text-center py-10'>Loading set data...</div>
-  //     </div>
-  //   );
-  // }
-
   if (!set) {
     return (
       <div className='container'>
@@ -194,6 +185,23 @@ export default function SetDetailPage() {
               <div className='text-sm text-gray-500'>
                 Created: {new Date(set.created_at).toLocaleDateString()}
               </div>
+              {flashcards.length > 0 && (
+                <Link
+                  href={`/sets/${setId}/test`}
+                  className='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center gap-2'
+                >
+                  <svg
+                    className='w-4 h-4'
+                    fill='currentColor'
+                    viewBox='0 0 20 20'
+                    xmlns='http://www.w3.org/2000/svg'
+                    aria-hidden='true'
+                  >
+                    <path d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' />
+                  </svg>
+                  Test Knowledge
+                </Link>
+              )}
               <button
                 onClick={openDeleteDialog}
                 disabled={isDeleting}

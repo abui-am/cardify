@@ -1,10 +1,10 @@
 "use server";
 
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
-import fs from "node:fs/promises";
-import path from "node:path";
-import os from "node:os";
 
 export interface PdfParseResult {
 	success: boolean;
